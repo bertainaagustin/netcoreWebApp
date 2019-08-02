@@ -16,8 +16,6 @@ namespace AspNetCoreTodo.Services
             _context = context;
         }
 
-    
-
         public async Task<TodoItem[]> GetIncompleteItemsAsync()
         {
             return await _context.Items
@@ -31,6 +29,20 @@ namespace AspNetCoreTodo.Services
             //newItem.DueAt = DateTimeOffset.Now.AddDays(3);
 
             _context.Items.Add(newItem);
+
+            var saveResult = await _context.SaveChangesAsync();
+            return saveResult == 1;
+        }
+
+        public async Task<bool> MarkDoneAsync(Guid id)
+        {
+            var item = await _context.Items
+                .Where(x => x.Id == id)
+                .SingleOrDefaultAsync();
+            
+            if(item == null) return false;
+
+            item.IsDone = true;
 
             var saveResult = await _context.SaveChangesAsync();
             return saveResult == 1;

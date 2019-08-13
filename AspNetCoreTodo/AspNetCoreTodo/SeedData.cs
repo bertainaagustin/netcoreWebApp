@@ -16,7 +16,7 @@ namespace AspNetCoreTodo
             await EnsureRolesAsync(roleManager);
 
             var userManager = services
-                .GetRequiredService<UserManager<ApplicationUser>>(
+                .GetRequiredService<UserManager<IdentityUser>>(
             );
             await EnsureTestAdminAsync(userManager);
         }
@@ -31,7 +31,7 @@ namespace AspNetCoreTodo
             await roleManager.CreateAsync(new IdentityRole(Constants.AdministratorRole));
         }
 
-        private static async Task EnsureTestAdminAsync(UserManager<ApplicationUser> userManager)
+        private static async Task EnsureTestAdminAsync(UserManager<IdentityUser> userManager)
         {
             var testAdmin = await userManager.Users
                 .Where(x => x.UserName == "admin@todo.local")
@@ -39,7 +39,7 @@ namespace AspNetCoreTodo
 
             if (testAdmin != null) return;
 
-            testAdmin = new ApplicationUser
+            testAdmin = new IdentityUser
             {
                 UserName = "admin@todo.local",
                 Email = "admin@todo.local"

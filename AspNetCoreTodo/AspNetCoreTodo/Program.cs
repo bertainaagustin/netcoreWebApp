@@ -31,8 +31,7 @@ namespace AspNetCoreTodo
                 }
                 catch (Exception ex)
                 {
-                    var logger = services
-                        .GetRequiredService<ILogger<Program>>();
+                    var logger = services.GetRequiredService<ILogger<Program>>();
                     logger.LogError(ex, "Error occurred seeding the DB.");
                 }
             }

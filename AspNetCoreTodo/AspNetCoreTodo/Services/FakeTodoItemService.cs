@@ -1,17 +1,18 @@
 using System;
 using System.Threading.Tasks;
 using AspNetCoreTodo.Models;
+using Microsoft.AspNetCore.Identity;
 
 namespace AspNetCoreTodo.Services
 {
     public class FakeTodoItemService : ITodoItemService
     {
-        public Task<bool> AddItemAsync(TodoItem newItem, ApplicationUser user)
+        public Task<bool> AddItemAsync(TodoItem newItem, IdentityUser user)
         {
             throw new NotImplementedException();
         }
 
-        public Task<TodoItem[]> GetIncompleteItemsAsync(ApplicationUser user){
+        public Task<TodoItem[]> GetIncompleteItemsAsync(IdentityUser user){
         var item1 = new TodoItem
         {
             Title = "Learn ASP.NET Core",
@@ -25,7 +26,7 @@ namespace AspNetCoreTodo.Services
         return Task.FromResult(new[] { item1, item2 });
         }
 
-        public Task<bool> MarkDoneAsync(Guid id, ApplicationUser user)
+        public Task<bool> MarkDoneAsync(Guid id, IdentityUser user)
         {
             throw new NotImplementedException();
         }

@@ -43,12 +43,16 @@ namespace AspNetCoreTodo.UnitTests
                 var difference = DateTimeOffset.Now.AddDays(3) - item.DueAt;
                 Assert.True(difference < TimeSpan.FromSeconds(1));
             }
+
+            ClearDataBase(options);
+
+            
         }
 
         [Fact]
         public async Task MarkDoneAsyncCorrect()
         {
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(databaseName: "Test_MarkDone_Correct").Options;
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(databaseName: "Test_MarkDone").Options;
             var fakeUser = new ApplicationUser
             {
                 Id = "fake-000",
@@ -81,6 +85,8 @@ namespace AspNetCoreTodo.UnitTests
                 var item = await context.Items.FirstAsync();
                 Assert.True(item.IsDone);
             }
+
+            ClearDataBase(options);
         }
 
         [Fact]
@@ -114,6 +120,8 @@ namespace AspNetCoreTodo.UnitTests
                 var result = await service.MarkDoneAsync(fakeItemId, fakeUser);
                 Assert.False(result);
             }
+
+            ClearDataBase(options);
         }
 
         [Fact]
@@ -159,6 +167,16 @@ namespace AspNetCoreTodo.UnitTests
                     Assert.Equal(item.UserId, fakeUser1.Id);
                 }
             }
+
+            ClearDataBase(options);
         }
+
+         private async void ClearDataBase(DbContextOptions<ApplicationDbContext> options)
+         {
+             using (var context = new ApplicationDbContext(options))
+             {
+                 await context.Database.EnsureDeletedAsync();
+             }
+         }
     }
 }

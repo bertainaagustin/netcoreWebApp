@@ -25,7 +25,7 @@ namespace AspNetCoreTodo.IntegrationTests
 
             // Assert: the user is sent to the login page
             Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
-            Assert.Equal("http://localhost:8888/Account" + "/Login?ReturnUrl=%2Ftodo", response.Headers.Location.ToString());
+            Assert.Equal("http://localhost:8888/Identity/Account" + "/Login?ReturnUrl=%2FTodo", response.Headers.Location.ToString());
         }
     }
 }

@@ -53,36 +53,27 @@ namespace AspNetCoreTodo.UnitTests
         public async Task MarkDoneAsyncCorrect()
         {
             var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(databaseName: "Test_MarkDone").Options;
+            var doneResult = false;
             var fakeUser = new ApplicationUser
             {
                 Id = "fake-000",
                 UserName = "fake@example.com"
             };
-            var fakeItem =  new TodoItem
-            {
-                Title = "Testing?",
-                DueAt = DateTimeOffset.Now.AddDays(3)
-            };
+            var fakeItem =  NewTodoItem("Testing", fakeUser.Id, DateTimeOffset.Now.AddDays(3));
 
             using (var context = new ApplicationDbContext(options))
             {
-                var service = new TodoItemService(context);
+                context.Items.Add(fakeItem);
+                context.SaveChanges();
 
-                await service.AddItemAsync(fakeItem, fakeUser);
-            }
-
-            using (var context = new ApplicationDbContext(options))
-            {
-                var service = new TodoItemService(context);
-                var item = await context.Items.FirstAsync();
-
-                var result = await service.MarkDoneAsync(item.Id, fakeUser);
-                Assert.True(result);
+                var service = new TodoItemService(context);        
+                doneResult = await service.MarkDoneAsync(fakeItem.Id, fakeUser);
             }
 
             using (var context = new ApplicationDbContext(options))
             {
                 var item = await context.Items.FirstAsync();
+                Assert.True(doneResult);
                 Assert.True(item.IsDone);
             }
 
@@ -92,33 +83,31 @@ namespace AspNetCoreTodo.UnitTests
         [Fact]
         public async Task MarkDoneAsyncIncorrectId()
         {
-            var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(databaseName: "Test_MarkDone_Error").Options;
+            var options = new DbContextOptionsBuilder<ApplicationDbContext>().UseInMemoryDatabase(databaseName: "Test_MarkDone").Options;
+            var doneResult = false;
             var fakeUser = new ApplicationUser
             {
                 Id = "fake-000",
                 UserName = "fake@example.com"
             };
-            var fakeItem =  new TodoItem
-            {
-                Title = "Testing?",
-                DueAt = DateTimeOffset.Now.AddDays(3)
-            };
-            var fakeItemId = Guid.NewGuid();
+            var fakeItem =  NewTodoItem("Testing", fakeUser.Id, DateTimeOffset.Now.AddDays(3));
+            var randomId = Guid.NewGuid();
 
             using (var context = new ApplicationDbContext(options))
             {
+                context.Items.Add(fakeItem);
+                context.SaveChanges();
                 var service = new TodoItemService(context);
+                var item = await context.Items.FirstAsync();
 
-                await service.AddItemAsync(fakeItem, fakeUser);
+                doneResult = await service.MarkDoneAsync(randomId, fakeUser);
             }
 
             using (var context = new ApplicationDbContext(options))
             {
-                var service = new TodoItemService(context);
                 var item = await context.Items.FirstAsync();
-
-                var result = await service.MarkDoneAsync(fakeItemId, fakeUser);
-                Assert.False(result);
+                Assert.False(doneResult);
+                Assert.False(item.IsDone);
             }
 
             ClearDataBase(options);
@@ -139,21 +128,17 @@ namespace AspNetCoreTodo.UnitTests
                 Id = "fake-999",
                 UserName = "fake2@example.com"
             };
-
+            
+            var itemComplete = NewTodoItem("Testing", fakeUser1.Id, DateTimeOffset.Now.AddDays(3), true);
+            var itemIncomplete = NewTodoItem("Testing", fakeUser1.Id, DateTimeOffset.Now.AddDays(3));
+            var itemOtherUser = NewTodoItem("Testing", fakeUser2.Id, DateTimeOffset.Now.AddDays(3));
             using (var context = new ApplicationDbContext(options))
             {
-                var service = new TodoItemService(context);
-                await service.AddItemAsync(new TodoItem
-                {
-                    Title = "Testing?",
-                    DueAt = DateTimeOffset.Now.AddDays(3)
-                }, fakeUser1);
+                context.Items.Add(itemComplete);
+                context.Items.Add(itemIncomplete);
+                context.Items.Add(itemOtherUser);
 
-                await service.AddItemAsync(new TodoItem
-                {
-                    Title = "Testing?",
-                    DueAt = DateTimeOffset.Now.AddDays(3)
-                }, fakeUser2);
+                context.SaveChanges();
             }
 
             using (var context = new ApplicationDbContext(options))
@@ -162,12 +147,10 @@ namespace AspNetCoreTodo.UnitTests
 
                 var items = await service.GetIncompleteItemsAsync(fakeUser1);
 
-                foreach(var item in items)
-                {
-                    Assert.Equal(item.UserId, fakeUser1.Id);
-                }
+                Assert.Single(items);
+                Assert.Equal(itemIncomplete.Id, items[0].Id);
+                Assert.False(items[0].IsDone);
             }
-
             ClearDataBase(options);
         }
 
@@ -177,6 +160,17 @@ namespace AspNetCoreTodo.UnitTests
              {
                  await context.Database.EnsureDeletedAsync();
              }
+         }
+
+         private TodoItem NewTodoItem (string title, string userId, DateTimeOffset dueAt, bool isDone = false)
+         {
+             return new TodoItem {
+                Id = Guid.NewGuid(),
+                Title = title,
+                DueAt = dueAt,
+                IsDone = isDone,
+                UserId = userId
+             };
          }
     }
 }
